@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"os"
 	"portscan/scan"
@@ -23,10 +24,11 @@ var deleteCmd = &cobra.Command{
 	SilenceUsage: true,
 	Args:         cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		hostsFile, err := cmd.Flags().GetString("hosts-file")
-		if err != nil {
-			return err
-		}
+		//hostsFile, err := cmd.Flags().GetString("hosts-file")
+		//if err != nil {
+		//	return err
+		//}
+		hostsFile := viper.GetString("hosts-file")
 		return deleteAction(os.Stdout, hostsFile, args)
 	},
 }

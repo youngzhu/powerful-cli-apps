@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
@@ -50,6 +51,11 @@ func init() {
 
 	rootCmd.PersistentFlags().StringP("hosts-file", "f",
 		"portScan.hosts", "portScan hosts file")
+
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.SetEnvPrefix("PSCAN")
+	viper.BindPFlag("hosts-file", rootCmd.PersistentFlags().Lookup("hosts-file"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

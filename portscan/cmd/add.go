@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"io"
 	"os"
 	"portscan/scan"
@@ -22,10 +23,11 @@ var addCmd = &cobra.Command{
 	Args:         cobra.MinimumNArgs(1),
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		hostFile, err := cmd.Flags().GetString("hosts-file")
-		if err != nil {
-			return err
-		}
+		//hostFile, err := cmd.Flags().GetString("hosts-file")
+		//if err != nil {
+		//	return err
+		//}
+		hostFile := viper.GetString("hosts-file")
 		return addAction(os.Stdout, hostFile, args)
 	},
 }
