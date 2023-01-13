@@ -1,3 +1,5 @@
+//go:build !integration
+
 package cmd
 
 import (
@@ -53,7 +55,7 @@ func TestListAction(t *testing.T) {
 			}
 
 			var out bytes.Buffer
-			err := listAtion(&out, url)
+			err := listAction(&out, url)
 
 			if tc.expErr != nil {
 				if err == nil {

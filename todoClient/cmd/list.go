@@ -22,11 +22,11 @@ var listCmd = &cobra.Command{
 	Short: "List todo items",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apiRoot := viper.GetString("api-root")
-		return listAtion(os.Stdout, apiRoot)
+		return listAction(os.Stdout, apiRoot)
 	},
 }
 
-func listAtion(out io.Writer, apiRoot string) error {
+func listAction(out io.Writer, apiRoot string) error {
 	items, err := getAll(apiRoot)
 	if err != nil {
 		return err
