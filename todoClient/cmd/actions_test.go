@@ -72,3 +72,66 @@ func TestListAction(t *testing.T) {
 		})
 	}
 }
+
+func TestViewAction(t *testing.T) {
+	testCases := []struct {
+		name   string
+		expErr error
+		expOut string
+		resp   struct {
+			Status int
+			Body   string
+		}
+		id string
+	}{
+		{
+			name:   "ResultOne",
+			expErr: nil,
+			expOut: "Task:         Task 1\nCreated at:   Jan/12 @17:00\nCompleted:    No\n",
+			resp:   testResp["resultOne"],
+			id:     "1",
+		},
+		{
+			name:   "NotFound",
+			expErr: ErrNotFound,
+			resp:   testResp["notFound"],
+			id:     "1",
+		},
+		{
+			name:   "InvalidID",
+			expErr: ErrNotNumber,
+			resp:   testResp["noResults"],
+			id:     "a",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			url, cleanup := mockServer(
+				func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(tc.resp.Status)
+					fmt.Fprintln(w, tc.resp.Body)
+				})
+			defer cleanup()
+
+			var out bytes.Buffer
+			err := viewAction(&out, url, tc.id)
+
+			if tc.expErr != nil {
+				if err == nil {
+					t.Fatalf("Expected error %q, got no error.", tc.expErr)
+				}
+				if !errors.Is(err, tc.expErr) {
+					t.Errorf("Expected error %q, got %q.", tc.expErr, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Expected no error, got %q.", err)
+			}
+			if tc.expOut != out.String() {
+				t.Errorf("Expected output %q, got %q", tc.expOut, out.String())
+			}
+		})
+	}
+}

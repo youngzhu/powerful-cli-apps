@@ -16,14 +16,14 @@ var testResp = map[string]struct {
 {
 "Task": "Task 1",
 "Done": false,
-"CreatedAt": "",
-"Completed": ""
+"CreateAt": "2023-01-12T17:00:51.3695194+08:00",
+"Completed": "0001-01-01T00:00:00Z"
 },
 {
 "Task": "Task 2",
 "Done": false,
-"CreatedAt": "",
-"Completed": ""
+"CreateAt": "2023-01-12T17:00:51.3695194+08:00",
+"CompletedAt": "0001-01-01T00:00:00Z"
 }
 ],
 "date": 0,
@@ -32,14 +32,15 @@ var testResp = map[string]struct {
 	"resultOne": {
 		Status: http.StatusOK,
 		Body: `{
+"results": [
 {
 "Task": "Task 1",
 "Done": false,
-"CreatedAt": "",
-"Completed": ""
+"CreateAt": "2023-01-12T17:00:51.3695194+08:00",
+"CompletedAt": "0001-01-01T00:00:00Z"
 }
 ],
-"date": 0,
+"date": 1572265440,
 "totalResults": 1
 }`,
 	},
