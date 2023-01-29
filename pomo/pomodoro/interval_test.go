@@ -2,6 +2,7 @@ package pomodoro_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"pomo/pomodoro"
 	"testing"
@@ -81,7 +82,7 @@ func TestGetInterval(t *testing.T) {
 	config := pomodoro.NewConfig(repo,
 		3*duration, duration, 2*duration)
 
-	for i := 0; i <= 16; i++ {
+	for i := 1; i <= 16; i++ {
 		var (
 			expCategory string
 			expDuration time.Duration
@@ -134,5 +135,177 @@ func TestGetInterval(t *testing.T) {
 			}
 		})
 
+	}
+}
+
+func TestInterval_Pause(t *testing.T) {
+	const duration = 2 * time.Second
+
+	repo, cleanup := getRepo(t)
+	defer cleanup()
+
+	config := pomodoro.NewConfig(repo, duration, duration, duration)
+
+	testCases := []struct {
+		name        string
+		start       bool
+		expState    int
+		expDuration time.Duration
+	}{
+		{
+			name:        "NotStarted",
+			start:       false,
+			expState:    pomodoro.StateNotStarted,
+			expDuration: 0,
+		},
+		{
+			name:        "Paused",
+			start:       true,
+			expState:    pomodoro.StatePaused,
+			expDuration: duration / 2,
+		},
+	}
+	expError := pomodoro.ErrIntervalNotRunning
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+
+			i, err := pomodoro.GetInterval(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			start := func(interval pomodoro.Interval) {}
+			end := func(interval pomodoro.Interval) {
+				t.Errorf("End callback should not be executed")
+			}
+			periodic := func(interval pomodoro.Interval) {
+				if err := interval.Pause(config); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			if tc.start {
+				if err := i.Start(ctx, config, start, periodic, end); err != nil {
+					t.Fatal(err)
+				}
+			}
+			i, err = pomodoro.GetInterval(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = i.Pause(config)
+			if err != nil {
+				if !errors.Is(err, expError) {
+					t.Fatalf("Expected error %q, got %q", expError, err)
+				}
+			} else {
+				t.Errorf("Expected error %q, got nil", expError)
+			}
+
+			i, err = repo.ByID(i.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if i.State != tc.expState {
+				t.Errorf("Expected state %d, got %d.\n",
+					tc.expState, i.State)
+			}
+			if i.ActualDuration != tc.expDuration {
+				t.Errorf("Expected duration %q, got %q.\n",
+					tc.expDuration, i.ActualDuration)
+			}
+			cancel()
+		})
+	}
+}
+
+func TestInterval_Start(t *testing.T) {
+	const duration = 2 * time.Second
+
+	repo, cleanup := getRepo(t)
+	defer cleanup()
+
+	config := pomodoro.NewConfig(repo, duration, duration, duration)
+
+	testCases := []struct {
+		name        string
+		cancel      bool
+		expState    int
+		expDuration time.Duration
+	}{
+		{
+			name:        "Finish",
+			cancel:      false,
+			expState:    pomodoro.StateDone,
+			expDuration: duration,
+		},
+		{
+			name:        "Cancel",
+			cancel:      true,
+			expState:    pomodoro.StateCancelled,
+			expDuration: duration / 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+
+			i, err := pomodoro.GetInterval(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			start := func(i pomodoro.Interval) {
+				if i.State != pomodoro.StateRunning {
+					t.Errorf("Expected state %d, got %d.\n",
+						pomodoro.StateRunning, i.State)
+				}
+				if i.ActualDuration >= i.PlannedDuration {
+					t.Errorf("Expected ActualDuration %q, less than Planned %q.\n",
+						i.ActualDuration, i.PlannedDuration)
+				}
+			}
+			end := func(i pomodoro.Interval) {
+				if i.State != tc.expState {
+					t.Errorf("Expected state %d, got %d.\n",
+						tc.expState, i.State)
+				}
+				if tc.cancel {
+					t.Errorf("End callback should not be executed")
+				}
+			}
+			periodic := func(i pomodoro.Interval) {
+				if i.State != pomodoro.StateRunning {
+					t.Errorf("Expected state %d, got %d.\n",
+						pomodoro.StateRunning, i.State)
+				}
+				if tc.cancel {
+					cancel()
+				}
+			}
+
+			if err := i.Start(ctx, config, start, periodic, end); err != nil {
+				t.Fatal(err)
+			}
+
+			i, err = repo.ByID(i.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if i.State != tc.expState {
+				t.Errorf("Expected state %d, got %d.\n",
+					tc.expState, i.State)
+			}
+			if i.ActualDuration != tc.expDuration {
+				t.Errorf("Expected ActualDuration %q, got %q.\n",
+					tc.expDuration, i.ActualDuration)
+			}
+
+			cancel()
+		})
 	}
 }

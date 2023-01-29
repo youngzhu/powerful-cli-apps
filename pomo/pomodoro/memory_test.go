@@ -9,7 +9,5 @@ import (
 func getRepo(t *testing.T) (pomodoro.Repository, func()) {
 	t.Helper()
 
-	return repository.NewMemoryRepo(), func() {
-		
-	}
+	return repository.NewMemoryRepo(), func() {}
 }
