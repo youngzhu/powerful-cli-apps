@@ -1,3 +1,3 @@
-package pomo
+package main
 
 // Pomodoro Application
