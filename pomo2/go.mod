@@ -3,6 +3,7 @@ module pomo2
 go 1.17
 
 require (
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mum4k/termdash v0.13.0
 	github.com/spf13/viper v1.7.0

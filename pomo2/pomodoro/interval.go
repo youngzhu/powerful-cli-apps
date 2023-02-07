@@ -42,6 +42,7 @@ type Repository interface {
 	// Breaks to retrieve a given number of Interval items
 	// that matches CategoryLongBreak or CategoryShortBreak
 	Breaks(n int) ([]Interval, error)
+	CategorySummary(day time.Time, filter string) (time.Duration, error)
 }
 
 var (

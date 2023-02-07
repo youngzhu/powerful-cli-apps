@@ -6,7 +6,9 @@ package repository
 import (
 	"fmt"
 	"pomo2/pomodoro"
+	"strings"
 	"sync"
+	"time"
 )
 
 type memoryRepo struct {
@@ -81,4 +83,22 @@ func (r *memoryRepo) Breaks(n int) ([]pomodoro.Interval, error) {
 		}
 	}
 	return data, nil
+}
+
+// return a daily summary
+func (r *memoryRepo) CategorySummary(day time.Time, filter string) (time.Duration, error) {
+	r.RLock()
+	defer r.RUnlock()
+
+	var d time.Duration
+	filter = strings.Trim(filter, "%")
+	for _, i := range r.intervals {
+		if i.StartTime.Year() == day.Year() &&
+			i.StartTime.YearDay() == day.YearDay() {
+			if strings.Contains(i.Category, filter) {
+				d += i.ActualDuration
+			}
+		}
+	}
+	return d, nil
 }
